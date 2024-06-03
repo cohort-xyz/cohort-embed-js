@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Embed SDK Vanilla JS example</title>
+  <style>
+    body {
+      width: 100%;
+      height: 100vh;
+      margin: 0;
+      padding: 0;
+      max-height: 100lvh;
+    }
+
+    #container-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      height: 100%;
+      width: 100%;
+    }
+
+    #container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+    }
+  </style>
+</head>
+
+<body>
+  <script type="module" src="/src/index.ts"></script>
+  <div id="container-wrapper">
+    <div id="container"></div>
+  </div>
+</body>
+
+</html>

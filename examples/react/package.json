@@ -1,0 +1,21 @@
+{
+  "dependencies": {
+    "@cohort/cohort-embed-js": "workspace:*",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "description": "React implementation of the Cohort SDK",
+  "devDependencies": {
+    "@types/react": "^18.2.66",
+    "@types/react-dom": "^18.2.22",
+    "@vitejs/plugin-react": "^4.2.1"
+  },
+  "name": "react-example",
+  "private": true,
+  "scripts": {
+    "start": "vite",
+    "lint": "biome check --apply src"
+  },
+  "type": "module",
+  "version": "1.0.0"
+}

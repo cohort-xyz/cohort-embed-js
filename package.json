@@ -1,0 +1,68 @@
+{
+  "author": "@cohort",
+  "description": "Javascript SDK for integrating Cohort Experience Space embeds",
+  "devDependencies": {
+    "@biomejs/biome": "1.7.3",
+    "@commitlint/cli": "^19.3.0",
+    "@commitlint/config-conventional": "^19.2.2",
+    "@semantic-release/changelog": "^6.0.3",
+    "@testing-library/dom": "^10.1.0",
+    "@types/node": "^20.12.12",
+    "@vitest/coverage-istanbul": "^1.6.0",
+    "husky": "^9.0.11",
+    "jsdom": "^24.0.0",
+    "semantic-release": "^23.1.1",
+    "typescript": "^5.3.3",
+    "vite": "^5.2.11",
+    "vite-plugin-dts": "^3.9.1",
+    "vitest": "^1.6.0"
+  },
+  "engines": {
+    "node": "20.11.1"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/cohort-sdk.es.js",
+      "require": "./dist/cohort-sdk.umd.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "license": "MIT",
+  "main": "dist/cohort-sdk.umd.js",
+  "module": "dist/cohort-sdk.es.js",
+  "name": "@cohort/cohort-embed-js",
+  "packageManager": "pnpm@8.14.0",
+  "release": {
+    "branches": [
+      "main"
+    ],
+    "plugins": [
+      "@semantic-release/commit-analyzer",
+      "@semantic-release/release-notes-generator",
+      "@semantic-release/npm",
+      "@semantic-release/changelog",
+      "@semantic-release/github"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cohort-xyz/cohort-embed-js.git"
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.project.json && vite build",
+    "commitlint": "commitlint",
+    "dev": "vite build --watch --emptyOutDir false",
+    "lint": "biome check src tests examples/react/src examples/vanilla-js/src --organize-imports-enabled=false",
+    "lint:apply": "pnpm run lint --apply",
+    "prepare": "husky",
+    "semantic-release": "semantic-release",
+    "test": "vitest --coverage"
+  },
+  "type": "module",
+  "types": "dist/index.d.ts",
+  "version": "1.0.0"
+}

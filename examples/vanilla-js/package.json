@@ -1,0 +1,14 @@
+{
+  "description": "JS implementation of the Cohort SDK",
+  "dependencies": {
+    "@cohort/cohort-embed-js": "workspace:*"
+  },
+  "name": "vanilla-js-example",
+  "private": true,
+  "scripts": {
+    "start": "vite",
+    "lint": "biome check --apply src"
+  },
+  "type": "module",
+  "version": "1.0.0"
+}
