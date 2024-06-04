@@ -1,0 +1,11 @@
+{
+  "description": "JS implementation of the Cohort SDK from CDN",
+  "name": "cdn-example",
+  "private": true,
+  "scripts": {
+    "start": "vite",
+    "lint": "biome check --apply src"
+  },
+  "type": "module",
+  "version": "1.0.0"
+}

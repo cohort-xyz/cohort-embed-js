@@ -79,6 +79,12 @@ importers:
         specifier: workspace:*
         version: link:../..
 
+  examples/vanilla-js-cdn:
+    dependencies:
+      '@cohort-xyz/cohort-embed-js':
+        specifier: workspace:*
+        version: link:../..
+
 packages:
 
   /@ampproject/remapping@2.3.0:

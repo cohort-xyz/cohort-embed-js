@@ -1,8 +1,11 @@
 # Cohort Embed JS SDK
 
+![npm](https://img.shields.io/npm/v/@cohort-xyz/cohort-embed-js)
+![npm bundle size](https://img.shields.io/bundlephobia/min/@cohort-xyz/cohort-embed-js)
+
 ---
 
-Cohort is the Plug and Play marketing solution that turns the customer account into a powerful engagement channel for brands.
+[Cohort](https://getcohort.com/) is the Plug and Play marketing solution that turns the customer account into a powerful engagement channel for brands.
 
 ---
 
@@ -33,6 +36,12 @@ Via PNPM:
 
 ```sh
 pnpm add @cohort-xyz/cohort-embed-js
+```
+
+Via CDN:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/@cohort-xyz/cohort-embed-js"></script>
 ```
 
 ## Usage
@@ -145,6 +154,7 @@ Here's the complete list of options:
 
 - [Vanilla JS Example](examples/vanilla-js/README.md)
 - [React Example](examples/react/README.md)
+- [CDN Example](examples/cdn/README.md)
 
 ## Development
 

@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Embed SDK CDN example</title>
+  <style>
+    body {
+      width: 100%;
+      height: 100vh;
+      margin: 0;
+      padding: 0;
+      max-height: 100lvh;
+    }
+
+    #container-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      height: 100%;
+      width: 100%;
+    }
+
+    #container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+    }
+  </style>
+</head>
+
+<body>
+  <script src="https://cdn.jsdelivr.net/npm/@cohort-xyz/cohort-embed-js"></script>
+  <script type="module">
+    const sdk = new CohortSDK(import.meta.env.COHORT_XPS_ORIGIN_URL, true);
+
+    const AUTH_TOKEN = import.meta.env.COHORT_AUTH_TOKEN;
+
+    sdk.renderExperienceSpace(
+      import.meta.env.COHORT_USER_EMAIL,
+      {
+        containerId: 'container',
+      },
+      async () => {
+        // This is a mock function to simulate the call to get the authentication token
+        return new Promise(resolve => {
+          setTimeout(() => {
+            resolve(AUTH_TOKEN);
+          }, 1000);
+        });
+      },
+    );
+
+    sdk.on('location.updated', message => {
+      console.log('Location updated', message);
+    });
+
+    sdk.on('order.created', message => {
+      console.log('Order created', message);
+    });
+  </script>
+  <div id="container-wrapper">
+    <div id="container"></div>
+  </div>
+</body>
+
+</html>
