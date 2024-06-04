@@ -1,4 +1,4 @@
-import CohortSDK from '@cohort/cohort-embed-js';
+import CohortSDK from '@cohort-xyz/cohort-embed-js';
 
 const sdk = new CohortSDK(import.meta.env.COHORT_XPS_ORIGIN_URL, true);
 

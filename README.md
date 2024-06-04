@@ -26,13 +26,13 @@ Cohort Embed JS SDK is a JavaScript SDK for integrating Cohort Experience Space 
 Via NPM:
 
 ```sh
-npm install @cohort/cohort-embed-js
+npm install @cohort-xyz/cohort-embed-js
 ```
 
 Via PNPM:
 
 ```sh
-pnpm add @cohort/cohort-embed-js
+pnpm add @cohort-xyz/cohort-embed-js
 ```
 
 ## Usage
@@ -42,7 +42,7 @@ pnpm add @cohort/cohort-embed-js
 First, you need to import and initialize the SDK:
 
 ```javascript
-import CohortSDK from '@cohort/cohort-embed-js';
+import CohortSDK from '@cohort-xyz/cohort-embed-js';
 
 const cohort = new CohortSDK('https://your-xps-origin.com');
 ```

@@ -1,4 +1,4 @@
-import CohortSDK from '@cohort/cohort-embed-js';
+import CohortSDK from '@cohort-xyz/cohort-embed-js';
 import {useCallback, useEffect, useState} from 'react';
 
 function App() {

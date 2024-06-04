@@ -53,7 +53,7 @@ importers:
 
   examples/react:
     dependencies:
-      '@cohort/cohort-embed-js':
+      '@cohort-xyz/cohort-embed-js':
         specifier: workspace:*
         version: link:../..
       react:
@@ -75,7 +75,7 @@ importers:
 
   examples/vanilla-js:
     dependencies:
-      '@cohort/cohort-embed-js':
+      '@cohort-xyz/cohort-embed-js':
         specifier: workspace:*
         version: link:../..
 
