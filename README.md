@@ -1,6 +1,6 @@
 # Cohort Embed JS SDK
 
-![npm](https://img.shields.io/npm/v/@cohort-xyz/cohort-embed-js)
+[![npm](https://img.shields.io/npm/v/@cohort-xyz/cohort-embed-js)](https://www.npmjs.com/package/@cohort-xyz/cohort-embed-js)
 ![npm bundle size](https://img.shields.io/bundlephobia/min/@cohort-xyz/cohort-embed-js)
 
 ---
@@ -10,6 +10,8 @@
 ---
 
 Cohort Embed JS SDK is a JavaScript SDK for integrating Cohort Experience Space embeds into your web application. It provides an easy way to render iframes, manage user authentication, and handle messages from the embedded iframes.
+
+Find all the Cohort's documentation at [docs.getcohort.com](https://docs.getcohort.com/).
 
 ## Table of Contents
 
@@ -115,6 +117,10 @@ The main class for interacting with the Cohort Experience Space.
   - `userEmail`: The email of the logged in user.
   - `options`: The options for the iframe.
   - `getAuthToken`: A function to get the authentication token if the user is logged out. Here you should put the logic to get a Cohort authentication token from your backend which should use the Cohort Public API.
+
+> **About session caching**
+>
+> The SDK implementation is smart enough to check the session status and only request a new token by calling `getAuthToken` method if the user is logged out or if the currently logged user is different from the one passed in the `userEmail` parameter.
 
 Here's the complete list of options:
 
