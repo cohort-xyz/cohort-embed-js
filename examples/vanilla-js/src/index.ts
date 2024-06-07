@@ -8,7 +8,7 @@ sdk.renderExperienceSpace(
   import.meta.env.COHORT_USER_EMAIL,
   {
     containerId: 'container',
-    // pathname: '/store/test-store',
+    // pathname: '/rewards',
     // spinnerStyle: {
     // 	backgroundColor: 'black',
     // 	color: 'white',
@@ -30,6 +30,11 @@ sdk.renderExperienceSpace(
     });
   },
 );
+
+// Uncomment me to render a store
+// sdk.renderExperienceStore('test-store', {
+//   containerId: 'container',
+// });
 
 sdk.on('location.updated', message => {
   console.log('Location updated', message);

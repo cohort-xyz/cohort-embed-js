@@ -22,7 +22,7 @@ export type IframeOptions = {
   };
   spinnerStyle?: SpinnerOptions;
   pathname?: string;
-  urlParams?: Omit<EmbedUrlInputParams, 'embedEmail'>;
+  urlParams?: EmbedUrlInputParams;
 };
 
 /**
@@ -38,13 +38,12 @@ class CohortIframe {
 
   /**
    * Creates an instance of CohortIframe.
-   * @param {string} userEmail - The email of the user.
    * @param {string} xpsOrigin - The origin URL for the XPS.
    * @param {IframeOptions} [options] - The options for the iframe.
    * @param {boolean} [verbose] - Whether to enable verbose logging.
    * @throws Will throw an error if the container with the specified ID is not found.
    */
-  constructor(userEmail: string, xpsOrigin: string, options?: IframeOptions, verbose?: boolean) {
+  constructor(xpsOrigin: string, options?: IframeOptions, verbose?: boolean) {
     const containerId = options?.containerId;
     const {iframeStyle} = options ?? {};
 
@@ -53,14 +52,7 @@ class CohortIframe {
     }
 
     this.#logger = new Logger(verbose ?? false);
-    this.#url = buildCohortEmbedUrl(
-      xpsOrigin,
-      {
-        ...options?.urlParams,
-        embedEmail: userEmail,
-      },
-      options?.pathname,
-    );
+    this.#url = buildCohortEmbedUrl(xpsOrigin, options?.urlParams, options?.pathname);
     this.#wrapper = document.createElement('div');
     Object.assign(this.#wrapper.style, {
       position: 'relative',

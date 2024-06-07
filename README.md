@@ -118,25 +118,36 @@ The main class for interacting with the Cohort Experience Space.
   - `options`: The options for the iframe.
   - `getAuthToken`: A function to get the authentication token if the user is logged out. Here you should put the logic to get a Cohort authentication token from your backend which should use the Cohort Public API.
 
+- `renderExperienceStore(storeSlug: string, options: IframeOptions, authConfig?: {
+  userEmail: string;
+  getAuthToken: () => Promise<string>;
+})`: Renders the Experience Store iframe. **For the moment, it's only possible to render one Iframe at a time. Multiple calls to this method will replace the existing iframe.**
+
+  - `storeSlug`: The slug of the store.
+  - `options`: The options for the iframe.
+  - `authConfig?`: The authentication configuration for the iframe. The `authConfig` config is not required here as the Experience Store can be accessed by anyone.
+  - `authConfig.userEmail`: The email of the logged in user.
+  - `authConfig.getAuthToken`: A function to get the authentication token if the user is logged out. Here you should put the logic to get a Cohort authentication token from your backend which should use the Cohort Public API.
+
 > **About session caching**
 >
 > The SDK implementation is smart enough to check the session status and only request a new token by calling `getAuthToken` method if the user is logged out or if the currently logged user is different from the one passed in the `userEmail` parameter.
 
 Here's the complete list of options:
 
-| Option                            | Default       | Description                                                                                                                                                 |
-| --------------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **containerId**                   | `undefined`   | The id of the DOM element where the Iframe will be append to. If neither `containerId` nor `container` are provided, it will be append directly in the DOM. |
-| **container**                     | `undefined`   | The DOM element where the Iframe will be append to. If neither `containerId` nor `container` are provided, it will be append directly in the DOM.           |
-| **pathName**                      | `/space/home` | The path of the Experience Space.                                                                                                                           |
-| **iframeStyle?.width**            | `100%`        | The width property of the Iframe                                                                                                                            |
-| **iframeStyle?.height**           | `100%`        | The height property of the Iframe                                                                                                                           |
-| **iframeStyle?.border**           | `0`           | The border property of the Iframe                                                                                                                           |
-| **spinnerStyle?.color**           | `#000`        | The color of the spinner                                                                                                                                    |
-| **spinnerStyle?.backgroundColor** | `#E8E9E8`     | The background color of the spinner                                                                                                                         |
-| **urlParams?.disableLogout**      | `true`        | Whether to display the logout button in the Experience Space                                                                                                |
-| **urlParams?.navbar**             | `true`        | Whether to display the navbar in the Experience Space                                                                                                       |
-| **urlParams?.navigationType**     | `tabbar`      | The navigation type of the Experience Space for mobile devices. Possible values: `tabbar` or `burger`                                                       |
+| Option                            | Default                                                    | Description                                                                                                                                                 |
+| --------------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **containerId**                   | `undefined`                                                | The id of the DOM element where the Iframe will be append to. If neither `containerId` nor `container` are provided, it will be append directly in the DOM. |
+| **container**                     | `undefined`                                                | The DOM element where the Iframe will be append to. If neither `containerId` nor `container` are provided, it will be append directly in the DOM.           |
+| **pathName**                      | `/space/home` for space and `/store/{storeSlug}` for store | The path of the Iframe. This parameter is ignored when using `renderExperienceStore`                                                                        |
+| **iframeStyle?.width**            | `100%`                                                     | The width property of the Iframe                                                                                                                            |
+| **iframeStyle?.height**           | `100%`                                                     | The height property of the Iframe                                                                                                                           |
+| **iframeStyle?.border**           | `0`                                                        | The border property of the Iframe                                                                                                                           |
+| **spinnerStyle?.color**           | `#000`                                                     | The color of the spinner                                                                                                                                    |
+| **spinnerStyle?.backgroundColor** | `#E8E9E8`                                                  | The background color of the spinner                                                                                                                         |
+| **urlParams?.disableLogout**      | `true`                                                     | Whether to display the logout button in the Experience Space                                                                                                |
+| **urlParams?.navbar**             | `true`                                                     | Whether to display the navbar in the Experience Space                                                                                                       |
+| **urlParams?.navigationType**     | `tabbar`                                                   | The navigation type of the Experience Space for mobile devices. Possible values: `tabbar` or `burger`                                                       |
 
 - `on<T extends MessageType>(event: T, handler: MessageHandler<T>): () => void`: Registers a handler for a specific message type.
 

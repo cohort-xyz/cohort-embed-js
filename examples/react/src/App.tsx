@@ -33,7 +33,7 @@ function App() {
           import.meta.env.COHORT_USER_EMAIL,
           {
             container: node,
-            // pathname: '/store/test-store',
+            // pathname: '/rewards',
             // spinnerStyle: {
             // 	backgroundColor: 'black',
             // 	color: 'white',

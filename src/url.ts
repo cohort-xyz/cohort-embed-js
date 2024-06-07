@@ -4,7 +4,7 @@ const allowedEmbedUrlParams = ['disableLogout', 'embedEmail', 'navbar', 'navigat
 
 export type EmbedUrlInputParams = {
   disableLogout?: boolean;
-  embedEmail: string;
+  embedEmail?: string;
   navbar?: boolean;
   navigationType?: 'burger' | 'tabbar';
 };
@@ -14,7 +14,10 @@ type EmbedUrlParams = EmbedUrlInputParams & {
   embedded: boolean;
 };
 
-const validateEmbedUrlParams = (params: EmbedUrlInputParams): EmbedUrlInputParams => {
+const validateEmbedUrlParams = (params?: EmbedUrlInputParams): EmbedUrlInputParams | undefined => {
+  if (!params) {
+    return undefined;
+  }
   for (const key of Object.keys(params)) {
     if (!allowedEmbedUrlParams.includes(key)) {
       delete params[key as keyof EmbedUrlInputParams];
@@ -23,9 +26,16 @@ const validateEmbedUrlParams = (params: EmbedUrlInputParams): EmbedUrlInputParam
   return params;
 };
 
+export function formatPathname(pathname: string, prefix: 'space' | 'store'): string {
+  const path = pathname.startsWith('/') ? pathname : `/${pathname}`;
+  const pathWithPrefix = path.startsWith(`/${prefix}`) ? path : `/${prefix}${path}`;
+
+  return pathWithPrefix;
+}
+
 export function buildCohortEmbedUrl(
   xpsUrl: string | URL,
-  params: EmbedUrlInputParams,
+  params?: EmbedUrlInputParams,
   pathname?: string,
 ): URL {
   const parentUrl = new URL(window.location.href);
