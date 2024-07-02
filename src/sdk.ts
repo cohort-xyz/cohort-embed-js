@@ -65,10 +65,14 @@ class CohortSDK {
   /**
    * Renders the Experience Space or Store iframe.
    * @param {IframeOptions} options - The options for the iframe.
-   * @param {() => Promise<string>} getAuthToken - A function to get the authentication token if the user is logged out.
+   * @param {string} authConfig.userEmail - The email of the user to render the iframe for.
+   * @param {() => Promise<string>} authConfig.getAuthToken - A function to get the authentication token if the user is logged out.
    * @private
    */
-  #renderIframe(options: IframeOptions, getAuthToken?: () => Promise<string>) {
+  #renderIframe(options: IframeOptions, authConfig?: {
+    userEmail: string;
+    getAuthToken: () => Promise<string>;
+  }) {
     const iframe = new CohortIframe(this.#xpsOrigin, options, this.#verbose);
 
     // TODO: once we fix the issue with firebase authentication in multiple frames
@@ -84,7 +88,7 @@ class CohortSDK {
         let getAuthTokenCalled = false;
         let timeoutId: NodeJS.Timeout;
 
-        if (!getAuthToken) {
+        if (!authConfig) {
           iframe.hideSpinner();
           return;
         }
@@ -109,7 +113,7 @@ class CohortSDK {
               this.#logger.error('Took too long to validate login, timing out...');
               iframe.hideSpinner();
             }, 10000);
-            const authToken = await getAuthToken();
+            const authToken = await authConfig.getAuthToken();
 
             iframe.login(authToken);
           }
@@ -119,81 +123,35 @@ class CohortSDK {
   }
 
   /**
-   * Renders the Experience Space iframe. Only one iframe can be rendered at a time for the moment.
+   * Renders the Experience Space iframe.
    * Will call getAuthToken if the user is logged out, otherwise will preserve the login state of the Experience Space
    * if the logged in user matches the provided email.
-   * @param {string} userEmail - The email of the user to render the iframe for.
    * @param {IframeOptions} options - The options for the iframe.
-   * @param {() => Promise<string>} getAuthToken - A function to get the authentication token if the user is logged out.
-   * @throws Will throw an error if the email is invalid.
-   */
-  renderExperienceSpace(
-    userEmail: string,
-    options: IframeOptions,
-    getAuthToken: () => Promise<string>,
-  ): void {
-    if (!isEmail(userEmail)) {
-      throw new Error('Invalid email');
-    }
-
-    if (!getAuthToken) {
-      throw new Error('getAuthToken function is required');
-    }
-    const iframeOptions = {
-      ...options,
-      pathname: options.pathname ? formatPathname(options.pathname, 'space') : undefined,
-      urlParams: {
-        ...options.urlParams,
-        embedEmail: userEmail,
-      },
-    } satisfies IframeOptions;
-
-    this.#renderIframe(iframeOptions, getAuthToken);
-  }
-
-  /**
-   * Renders the Experience Store iframe. Only one iframe can be rendered at a time for the moment.
-   * Will call getAuthToken if the user is logged out, otherwise will preserve the login state of the Experience Store
-   * if the logged in user matches the provided email.
-   * The getAuthToken function is not required here as the Experience Store can be accessed by anyone.
-   * @param {string} storeSlug - The slug of the store to render the iframe for.
-   * @param {IframeOptions} options - The options for the iframe.
-   * @param {Object} [authConfig] - The authentication configuration.
    * @param {string} authConfig.userEmail - The email of the user to render the iframe for.
    * @param {() => Promise<string>} authConfig.getAuthToken - A function to get the authentication token if the user is logged out.
    * @throws Will throw an error if the email is invalid.
    */
-  renderExperienceStore(
-    storeSlug: string,
-    options: Omit<IframeOptions, 'pathname'>,
+  renderExperienceSpace(
+    options: IframeOptions,
     authConfig?: {
       userEmail: string;
       getAuthToken: () => Promise<string>;
     },
   ): void {
-    if (!storeSlug) {
-      throw new Error('Invalid store slug');
+    if (authConfig && !isEmail(authConfig.userEmail)) {
+      throw new Error('Invalid email');
     }
 
-    if (authConfig) {
-      if (!isEmail(authConfig.userEmail)) {
-        throw new Error('Invalid email');
-      }
-
-      if (!authConfig.getAuthToken) {
-        throw new Error('getAuthToken function is required');
-      }
-    }
     const iframeOptions = {
       ...options,
-      pathname: `/store/${storeSlug}`,
+      pathname: options.pathname ? formatPathname(options.pathname, 'space') : undefined,
       urlParams: {
         ...options.urlParams,
-        embedEmail: authConfig?.userEmail,
+        embedEmail: authConfig ? authConfig.userEmail : undefined,
       },
     } satisfies IframeOptions;
 
-    this.#renderIframe(iframeOptions, authConfig?.getAuthToken);
+    this.#renderIframe(iframeOptions, authConfig);
   }
 
   /**

@@ -1,73 +1,56 @@
-import CohortSDK from '@cohort-xyz/cohort-embed-js';
-import {useCallback, useEffect, useState} from 'react';
+import {useState} from 'react';
+import ExperienceSpace from './ExperienceSpace';
+
+function LoginForm({onSubmit}: {onSubmit: (email: string) => void}) {
+  const [email, setEmail] = useState('');
+  return (
+    <form
+      onSubmit={e => {
+        e.preventDefault();
+        onSubmit(email);
+      }}
+    >
+      <input
+        type="email"
+        value={email}
+        onChange={e => setEmail(e.target.value)}
+      />
+      <button type="submit">Login</button>
+    </form>
+  );
+}
+
+function LogoutForm({onSubmit, userEmail}: {onSubmit: () => void, userEmail: string}) {
+  return (
+    <form
+      onSubmit={e => {
+        e.preventDefault();
+        onSubmit();
+      }}
+    >
+      <p>Welcome, {userEmail}!</p>
+      <button type="submit">Logout</button>
+    </form>
+  );
+}
 
 function App() {
-  const [sdk, setSdk] = useState<CohortSDK | null>(null);
-
-  useEffect(() => {
-    const instance = new CohortSDK(import.meta.env.COHORT_XPS_ORIGIN_URL, true);
-
-    const offLocation = instance.on('location.updated', message => {
-      console.log('Location updated', message);
-    });
-
-    const offOrder = instance.on('order.created', message => {
-      console.log('Order created', message);
-    });
-
-    setSdk(instance);
-    return () => {
-      offLocation();
-      offOrder();
-      instance.destroy();
-      setSdk(null);
-    };
-  }, []);
-
-  const renderExperienceSpace = useCallback(
-    (node: HTMLElement | null) => {
-      if (node && sdk) {
-        const AUTH_TOKEN = import.meta.env.COHORT_AUTH_TOKEN;
-
-        sdk.renderExperienceSpace(
-          import.meta.env.COHORT_USER_EMAIL,
-          {
-            container: node,
-            // pathname: '/rewards',
-            // spinnerStyle: {
-            // 	backgroundColor: 'black',
-            // 	color: 'white',
-            // },
-            // iframeStyle: {
-            // 	width: '400px',
-            // },
-            // urlParams: {
-            // 	navigationType: 'burger',
-            // 	navbar: false,
-            // },
-          },
-          async () => {
-            // This is a mock function to simulate the call to get the authentication token
-            return new Promise(resolve => {
-              setTimeout(() => {
-                resolve(AUTH_TOKEN);
-              }, 1000);
-            });
-          },
-        );
-      }
-    },
-    [sdk],
-  );
-
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   return (
-    <div
-      style={{
-        width: '100%',
-        height: '100%',
-      }}
-      ref={renderExperienceSpace}
-    />
+    <div style={{
+      width: '100%',
+      height: '100%',
+    }}>
+      {userEmail ? (
+        <LogoutForm
+          userEmail={userEmail}
+          onSubmit={() => setUserEmail(null)}
+        />
+      ) : (
+        <LoginForm onSubmit={email => setUserEmail(email)} />
+      )}
+      <ExperienceSpace userEmail={userEmail} />
+    </div>
   );
 }
 

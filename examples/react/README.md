@@ -14,10 +14,16 @@ pnpm install
 
 3. Configure the environment variables. Copy `.env.sample` to `.env` fill in the required values.
 
-4. Run the example app
+4. Serve the SDK for hot-reload from the root of the monorepo
 
 ```sh
 pnpm dev
 ```
 
-5. Open the example app at [localhost:4243](http://localhost:4243).
+5. In another terminal, start this folder
+
+```sh
+pnpm start
+```
+
+6. Open the example app at [localhost:4243](http://localhost:4243).
