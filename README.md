@@ -9,7 +9,7 @@
 
 ---
 
-Cohort Embed JS SDK is a JavaScript SDK for integrating Cohort Experience Space embeds into your web application. It provides an easy way to render iframes, manage user authentication, and handle messages from the embedded iframes.
+Cohort Embed JS SDK is a JavaScript SDK for integrating Cohort Experience Space embeds into your web application. It provides an easy way to render iframe, manage user authentication, and handle messages from the embedded iframe.
 
 Find all the Cohort's documentation at [docs.getcohort.com](https://docs.getcohort.com/).
 
@@ -112,44 +112,42 @@ The main class for interacting with the Cohort Experience Space.
   - `xpsOrigin`: The origin URL for the XPS iframe.
   - `verbose`: Whether to enable verbose logging.
 
-- `renderExperienceSpace(userEmail: string, options: IframeOptions, getAuthToken: () => Promise<string>)`: Renders the Experience Space iframe. **For the moment, it's only possible to render one Iframe at a time. Multiple calls to this method will replace the existing iframe.**
+- `renderExperienceSpace(config?: CohortXpsConfig)`: Renders the Experience Space in an iframe.
 
-  - `userEmail`: The email of the logged in user.
-  - `options`: The options for the iframe.
-  - `getAuthToken`: A function to get the authentication token if the user is logged out. Here you should put the logic to get a Cohort authentication token from your backend which should use the Cohort Public API.
+  - `config`: The configuration for the Experience Space.
 
-- `renderExperienceStore(storeSlug: string, options: IframeOptions, authConfig?: {
-  userEmail: string;
-  getAuthToken: () => Promise<string>;
-})`: Renders the Experience Store iframe. **For the moment, it's only possible to render one Iframe at a time. Multiple calls to this method will replace the existing iframe.**
+### Authentication
 
-  - `storeSlug`: The slug of the store.
-  - `options`: The options for the iframe.
-  - `authConfig?`: The authentication configuration for the iframe. The `authConfig` config is not required here as the Experience Store can be accessed by anyone.
-  - `authConfig.userEmail`: The email of the logged in user.
-  - `authConfig.getAuthToken`: A function to get the authentication token if the user is logged out. Here you should put the logic to get a Cohort authentication token from your backend which should use the Cohort Public API.
+The Experience Space supports 2 modes of authentication:
 
-> **About session caching**
->
-> The SDK implementation is smart enough to check the session status and only request a new token by calling `getAuthToken` method if the user is logged out or if the currently logged user is different from the one passed in the `userEmail` parameter.
+- `cohort` (Default): The session of the user is managed by Cohort. The user will be required to login and logout inside the iframe using their email address. This is the simplest authentication mode. Use this if you don't have an existing user authentication system, or if you don't want to integrate Cohort with it. Sessions will be cached automatically inside the iframe (so the user won't need to sign-in again if they have signed-in in the past on the same browser).
+- `custom`: You are in charge of managing the session of the user. You must provide the following parameters:
 
-Here's the complete list of options:
+  - `userEmail`: The email of the user currently logged-in in your application (or null, if the user is logged out)
+  - `getAuthToken`: A function that you must implement to retrieve the Cohort authToken for the currently logged-in user using the Cohort Merchants API. This function will be called by the SDK when we need an authentication token to sign the user in the iframe.
+  - `customLoginUrl`: The URL of your application authentication page. If you allow logged-out users to see the Experience Space, they will be redirected to this URL when they try to access a protected page. The URL of the page the user must be redirected to after login will be passed as a parameter. For the best user experience, we recommend that your authentication page supports it and redirects the user to it after login.
+  - `customLoginRedirectParameterName`: The name of the URL parameter that will contain the URL to redirect the user after login. By default, it is `destination`.
 
-| Option                            | Default                                                    | Description                                                                                                                                                 |
-| --------------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **containerId**                   | `undefined`                                                | The id of the DOM element where the Iframe will be append to. If neither `containerId` nor `container` are provided, it will be append directly in the DOM. |
-| **container**                     | `undefined`                                                | The DOM element where the Iframe will be append to. If neither `containerId` nor `container` are provided, it will be append directly in the DOM.           |
-| **pathName**                      | `/space/home` for space and `/store/{storeSlug}` for store | The path of the Iframe. This parameter is ignored when using `renderExperienceStore`                                                                        |
-| **iframeStyle?.width**            | `100%`                                                     | The width property of the Iframe                                                                                                                            |
-| **iframeStyle?.height**           | `100%`                                                     | The height property of the Iframe                                                                                                                           |
-| **iframeStyle?.border**           | `0`                                                        | The border property of the Iframe                                                                                                                           |
-| **spinnerStyle?.color**           | `#000`                                                     | The color of the spinner                                                                                                                                    |
-| **spinnerStyle?.backgroundColor** | `#E8E9E8`                                                  | The background color of the spinner                                                                                                                         |
-| **urlParams?.disableLogout**      | `true`                                                     | Whether to display the logout button in the Experience Space                                                                                                |
-| **urlParams?.navbar**             | `true`                                                     | Whether to display the navbar in the Experience Space                                                                                                       |
-| **urlParams?.navigationType**     | `tabbar`                                                   | The navigation type of the Experience Space for mobile devices. Possible values: `tabbar` or `burger`                                                       |
+  With the `custom` auth mode, the SDK will take care of knowing when the user is authenticated inside the iframe and will only request an auth-token when needed, so there is no need for you to implement any session caching.
 
-- `on<T extends MessageType>(event: T, handler: MessageHandler<T>): () => void`: Registers a handler for a specific message type.
+### Other options
+
+You can also specify other options to configure the iframe and the behavior of the Experience Space:
+
+| Option                                          | Default       | Description                                                                                                                                                                             |
+| ----------------------------------------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **iframeOptions.containerId**                   | `undefined`   | The id of the DOM element where the Iframe will be append to. If neither `iframeOptions.containerId` nor `iframeOptions.container` are provided, it will be append directly in the DOM. |
+| **iframeOptions.container**                     | `undefined`   | The DOM element where the Iframe will be append to. If neither `iframeOptions.containerId` nor `iframeOptions.container` are provided, it will be append directly in the DOM.           |
+| **iframeOptions.iframeStyle?.width**            | `100%`        | The width property of the Iframe                                                                                                                                                        |
+| **iframeOptions.iframeStyle?.height**           | `100%`        | The height property of the Iframe                                                                                                                                                       |
+| **iframeOptions.iframeStyle?.border**           | `0`           | The border property of the Iframe                                                                                                                                                       |
+| **iframeOptions.spinnerStyle?.color**           | `#000`        | The color of the spinner                                                                                                                                                                |
+| **iframeOptions.spinnerStyle?.backgroundColor** | `#E8E9E8`     | The background color of the spinner                                                                                                                                                     |
+| **pathname**                                    | `/space/home` | The path to load in the iframe. Default to the home page.                                                                                                                               |
+| **showNavbar**                                  | `true`        | Whether to display the navbar in the Experience Space                                                                                                                                   |
+| **navigationType**                              | `tabbar`      | The navigation type of the Experience Space for mobile devices. Possible values: `tabbar` or `burger`                                                                                   |
+
+- `on<T extends MessageType(event: T, handler: MessageHandler<T>): () => void`: Registers a handler for a specific message type.
 
   - `event`: The message type to handle.
   - `handler`: The handler function.

@@ -15,7 +15,7 @@ describe('CohortSDK', () => {
     sdk.destroy();
   });
 
-  it('should throw an error if trying to render without calling init first', () => {
+  it('should throw an error if the xps origin is not a valid URL', () => {
     expect(() => new CohortSDK('invalid-url')).toThrowError('Invalid XPS origin URL');
   });
 
@@ -27,81 +27,242 @@ describe('CohortSDK', () => {
   });
 
   describe('renderExperienceSpace', () => {
-    it('should throw an error if the email is invalid', () => {
-      const getAuthToken = vi.fn();
+    describe('with custom login', () => {
+      it('should throw an error if the email is invalid', () => {
+        const getAuthToken = vi.fn();
 
-      expect(() => sdk.renderExperienceSpace('invalid-email', {}, getAuthToken)).toThrowError(
-        'Invalid email',
-      );
-    });
+        expect(() =>
+          sdk.renderExperienceSpace({
+            auth: {
+              authMode: 'custom',
+              userEmail: 'invalid-email',
+              customLoginUrl: 'https//testouze.com/login',
+              getAuthToken,
+            },
+          }),
+        ).toThrowError('Invalid email');
+      });
 
-    it('should throw an error if the authToken method is not provided', () => {
-      // @ts-expect-error - This is a test case
-      expect(() => sdk.renderExperienceSpace(userEmail, {})).toThrowError(
-        'getAuthToken function is required',
-      );
-    });
+      it('should render a space iframe and call getAuthToken if user is logged out', async () => {
+        const getAuthToken = vi.fn().mockResolvedValue('test-token');
+        const container = document.createElement('div');
+        const containerId = 'test-container';
 
-    it('should throw an error if the container with the specified ID is not found', () => {
-      const getAuthToken = vi.fn();
+        container.id = containerId;
+        document.body.appendChild(container);
 
-      expect(() =>
-        sdk.renderExperienceSpace(userEmail, {containerId: 'invalid-id'}, getAuthToken),
-      ).toThrowError('Container with id invalid-id not found');
-    });
-
-    it('should throw an error if both container and containerId are specified', () => {
-      const getAuthToken = vi.fn();
-
-      expect(() =>
-        sdk.renderExperienceSpace(
-          userEmail,
-          {container: document.createElement('div'), containerId: 'test-id'},
-          getAuthToken,
-        ),
-      ).toThrowError('Cannot specify both container and containerId');
-    });
-
-    it('should render a space iframe and call getAuthToken if user is logged out', async () => {
-      const getAuthToken = vi.fn().mockResolvedValue('test-token');
-      const container = document.createElement('div');
-      const containerId = 'test-container';
-
-      container.id = containerId;
-      document.body.appendChild(container);
-
-      sdk.renderExperienceSpace(
-        userEmail,
-        {
-          containerId,
-          pathname: '/rewards',
-          iframeStyle: {
-            width: '400px',
+        sdk.renderExperienceSpace({
+          auth: {
+            authMode: 'custom',
+            userEmail,
+            getAuthToken,
+            customLoginUrl: 'https://testouze.com/login',
           },
-          urlParams: {
-            navbar: false,
-            navigationType: 'burger',
-            // @ts-expect-error - This param is not allowed
-            notAuthorizedParam: true,
+          iframeOptions: {
+            container,
+            iframeStyle: {
+              width: '400px',
+            },
+            spinnerStyle: {
+              backgroundColor: 'red',
+              color: 'blue',
+            },
           },
-        },
-        getAuthToken,
-      );
+          pathname: '/space/rewards',
+          showNavbar: false,
+          navigationType: 'burger',
+        });
+        const iframe = document.querySelector('iframe');
+
+        expect(iframe).not.toBeNull();
+        expect(iframe?.style.width).toBe('100%');
+        expect(iframe?.style.height).toBe('100%');
+        const wrapper = iframe?.parentElement;
+        const spinner = iframe?.nextElementSibling;
+
+        expect(wrapper?.parentElement?.id).toBe(containerId);
+        expect(wrapper?.style.width).toBe('400px');
+        expect(wrapper?.style.height).toBe('100%');
+        expect(spinner).not.toBeNull();
+        const spinnerSvg = spinner?.querySelector('svg');
+
+        expect(spinnerSvg).not.toBeNull();
+
+        // biome-ignore lint/style/noNonNullAssertion:
+        fireEvent.load(iframe!);
+        await waitFor(() => {
+          const url = new URL(iframe?.src ?? '');
+
+          expect(url.origin).toBe('https://testouze.com');
+          expect(url.pathname).toBe('/space/rewards');
+          expect(url.searchParams.get('embedEmail')).toBe(userEmail);
+          expect(url.searchParams.get('disableLogout')).toBe('true');
+          expect(url.searchParams.get('embedded')).toBe('true');
+          expect(url.searchParams.get('embedUrl')).toBe('http://localhost:3000/');
+          expect(url.searchParams.get('navbar')).toBe('false');
+          expect(url.searchParams.get('navigationType')).toBe('burger');
+          expect(url.searchParams.get('notAuthorizedParam')).toBeNull();
+        });
+        const logoutMessageEvent = new MessageEvent('message', {
+          data: {event: 'auth.updated', payload: {isLoggedIn: false}},
+        });
+
+        window.dispatchEvent(logoutMessageEvent);
+        await waitFor(() => expect(getAuthToken).toHaveBeenCalled());
+        const postMessageMock = vi.fn();
+
+        // biome-ignore lint/style/noNonNullAssertion:
+        iframe!.contentWindow!.postMessage = postMessageMock;
+        await waitFor(() => {
+          expect(postMessageMock).toHaveBeenCalledWith(
+            {event: 'login.authToken', payload: {authToken: 'test-token'}},
+            'https://testouze.com',
+          );
+        });
+        const loginMessageEvent = new MessageEvent('message', {
+          data: {event: 'auth.updated', payload: {isLoggedIn: true}},
+        });
+
+        window.dispatchEvent(loginMessageEvent);
+        await waitFor(() => {
+          const iframe = document.querySelector('iframe');
+          const spinner = iframe?.nextElementSibling;
+
+          expect(spinner).toBeNull();
+        });
+      });
+
+      it('should render a space iframe and not call getAuthToken if user is logged in', async () => {
+        const getAuthToken = vi.fn().mockResolvedValue('test-token');
+        const container = document.createElement('div');
+        const containerId = 'test-container';
+
+        container.id = containerId;
+        document.body.appendChild(container);
+
+        sdk.renderExperienceSpace({
+          auth: {
+            authMode: 'custom',
+            userEmail,
+            getAuthToken,
+            customLoginUrl: 'https://testouze.com/login',
+          },
+        });
+        const iframe = document.querySelector('iframe');
+
+        expect(iframe).not.toBeNull();
+        const postMessageMock = vi.fn();
+
+        // biome-ignore lint/style/noNonNullAssertion:
+        iframe!.contentWindow!.postMessage = postMessageMock;
+        const loginMessageEvent = new MessageEvent('message', {
+          data: {event: 'auth.updated', payload: {isLoggedIn: true}},
+        });
+
+        window.dispatchEvent(loginMessageEvent);
+        await waitFor(() => {
+          expect(getAuthToken).not.toHaveBeenCalled();
+          expect(postMessageMock).not.toHaveBeenCalled();
+        });
+      });
+
+      it('should disable logout', async () => {
+        const getAuthToken = vi.fn();
+
+        sdk.renderExperienceSpace({
+          auth: {
+            authMode: 'custom',
+            userEmail,
+            customLoginUrl: 'https//testouze.com/login',
+            getAuthToken,
+          },
+        });
+        const iframe = document.querySelector('iframe');
+
+        expect(iframe).not.toBeNull();
+        // biome-ignore lint/style/noNonNullAssertion:
+        fireEvent.load(iframe!);
+        await waitFor(() => {
+          const url = new URL(iframe?.src ?? '');
+
+          expect(url.searchParams.get('disableLogout')).toBe('true');
+        });
+      });
+
+      it('should set custom login redirect parameter if specified', async () => {
+        const getAuthToken = vi.fn();
+
+        sdk.renderExperienceSpace({
+          auth: {
+            authMode: 'custom',
+            userEmail,
+            customLoginUrl: 'https//testouze.com/login',
+            getAuthToken,
+            customLoginRedirectParameterName: 'redirectUri',
+          },
+        });
+        const iframe = document.querySelector('iframe');
+
+        expect(iframe).not.toBeNull();
+        // biome-ignore lint/style/noNonNullAssertion:
+        fireEvent.load(iframe!);
+        await waitFor(() => {
+          const url = new URL(iframe?.src ?? '');
+
+          expect(url.searchParams.get('customLoginRedirectParameterName')).toBe('redirectUri');
+        });
+      });
+    });
+
+    describe('with cohort login', () => {
+      it('should not set custom login parameters', async () => {
+        sdk.renderExperienceSpace({
+          auth: {
+            authMode: 'cohort',
+          },
+        });
+        const iframe = document.querySelector('iframe');
+
+        expect(iframe).not.toBeNull();
+        // biome-ignore lint/style/noNonNullAssertion:
+        fireEvent.load(iframe!);
+        await waitFor(() => {
+          const url = new URL(iframe?.src ?? '');
+
+          expect(url.origin).toBe('https://testouze.com');
+          expect(url.searchParams.get('embedEmail')).toBeNull();
+          expect(url.searchParams.get('customLoginUrl')).toBeNull();
+          expect(url.searchParams.get('customLoginRedirectParameterName')).toBeNull();
+          expect(url.searchParams.get('disableLogout')).toBe('false');
+          expect(url.searchParams.get('embedded')).toBe('true');
+          expect(url.searchParams.get('embedUrl')).toBe('http://localhost:3000/');
+        });
+      });
+
+      it('should not disable logout', async () => {
+        sdk.renderExperienceSpace({
+          auth: {
+            authMode: 'cohort',
+          },
+        });
+        const iframe = document.querySelector('iframe');
+
+        expect(iframe).not.toBeNull();
+        // biome-ignore lint/style/noNonNullAssertion:
+        fireEvent.load(iframe!);
+        await waitFor(() => {
+          const url = new URL(iframe?.src ?? '');
+
+          expect(url.searchParams.get('disableLogout')).toBe('false');
+        });
+      });
+    });
+
+    it('should default to cohort login', async () => {
+      sdk.renderExperienceSpace();
+
       const iframe = document.querySelector('iframe');
-
       expect(iframe).not.toBeNull();
-      expect(iframe?.style.width).toBe('100%');
-      expect(iframe?.style.height).toBe('100%');
-      const wrapper = iframe?.parentElement;
-      const spinner = iframe?.nextElementSibling;
-
-      expect(wrapper?.parentElement?.id).toBe(containerId);
-      expect(wrapper?.style.width).toBe('400px');
-      expect(wrapper?.style.height).toBe('100%');
-      expect(spinner).not.toBeNull();
-      const spinnerSvg = spinner?.querySelector('svg');
-
-      expect(spinnerSvg).not.toBeNull();
 
       // biome-ignore lint/style/noNonNullAssertion:
       fireEvent.load(iframe!);
@@ -109,85 +270,39 @@ describe('CohortSDK', () => {
         const url = new URL(iframe?.src ?? '');
 
         expect(url.origin).toBe('https://testouze.com');
-        expect(url.pathname).toBe('/space/rewards');
-        expect(url.searchParams.get('embedEmail')).toBe(userEmail);
-        expect(url.searchParams.get('disableLogout')).toBe('true');
+        expect(url.searchParams.get('embedEmail')).toBeNull();
+        expect(url.searchParams.get('customLoginUrl')).toBeNull();
+        expect(url.searchParams.get('customLoginRedirectParameterName')).toBeNull();
+        expect(url.searchParams.get('disableLogout')).toBe('false');
         expect(url.searchParams.get('embedded')).toBe('true');
         expect(url.searchParams.get('embedUrl')).toBe('http://localhost:3000/');
-        expect(url.searchParams.get('navbar')).toBe('false');
-        expect(url.searchParams.get('navigationType')).toBe('burger');
-        expect(url.searchParams.get('notAuthorizedParam')).toBeNull();
-      });
-      const logoutMessageEvent = new MessageEvent('message', {
-        data: {event: 'auth.updated', payload: {isLoggedIn: false}},
-      });
-
-      window.dispatchEvent(logoutMessageEvent);
-      await waitFor(() => expect(getAuthToken).toHaveBeenCalled());
-      const postMessageMock = vi.fn();
-
-      // biome-ignore lint/style/noNonNullAssertion:
-      iframe!.contentWindow!.postMessage = postMessageMock;
-      await waitFor(() => {
-        expect(postMessageMock).toHaveBeenCalledWith(
-          {event: 'login.authToken', payload: {authToken: 'test-token'}},
-          'https://testouze.com',
-        );
-      });
-      const loginMessageEvent = new MessageEvent('message', {
-        data: {event: 'auth.updated', payload: {isLoggedIn: true}},
-      });
-
-      window.dispatchEvent(loginMessageEvent);
-      await waitFor(() => {
-        const iframe = document.querySelector('iframe');
-        const spinner = iframe?.nextElementSibling;
-
-        expect(spinner).toBeNull();
       });
     });
 
-    it('should render a space iframe and not call getAuthToken if user is logged in', async () => {
-      const getAuthToken = vi.fn().mockResolvedValue('test-token');
-      const container = document.createElement('div');
-      const containerId = 'test-container';
+    it('should throw an error if the container with the specified ID is not found', () => {
+      expect(() =>
+        sdk.renderExperienceSpace({iframeOptions: {containerId: 'invalid-id'}}),
+      ).toThrowError('Container with id invalid-id not found');
+    });
 
-      container.id = containerId;
-      document.body.appendChild(container);
-
-      sdk.renderExperienceSpace(userEmail, {}, getAuthToken);
-      const iframe = document.querySelector('iframe');
-
-      expect(iframe).not.toBeNull();
-      const postMessageMock = vi.fn();
-
-      // biome-ignore lint/style/noNonNullAssertion:
-      iframe!.contentWindow!.postMessage = postMessageMock;
-      const loginMessageEvent = new MessageEvent('message', {
-        data: {event: 'auth.updated', payload: {isLoggedIn: true}},
-      });
-
-      window.dispatchEvent(loginMessageEvent);
-      await waitFor(() => {
-        expect(getAuthToken).not.toHaveBeenCalled();
-        expect(postMessageMock).not.toHaveBeenCalled();
-      });
+    it('should throw an error if both container and containerId are specified', () => {
+      expect(() =>
+        sdk.renderExperienceSpace({
+          iframeOptions: {container: document.createElement('div'), containerId: 'test-id'},
+        }),
+      ).toThrowError('Cannot specify both container and containerId');
     });
 
     it('should render a space iframe and only one', async () => {
-      const getAuthToken = vi.fn().mockResolvedValue('test-token');
       const container = document.createElement('div');
 
       container.id = 'test-container';
       document.body.appendChild(container);
-      sdk.renderExperienceSpace(
-        userEmail,
-        {
+      sdk.renderExperienceSpace({
+        iframeOptions: {
           container,
-          pathname: '/space/home',
         },
-        getAuthToken,
-      );
+      });
       const iframe = document.querySelector('iframe');
 
       expect(iframe).not.toBeNull();
@@ -205,14 +320,15 @@ describe('CohortSDK', () => {
         const url = new URL(iframe?.src ?? '');
 
         expect(url.origin).toBe('https://testouze.com');
-        expect(url.pathname).toBe('/space/home');
-        expect(url.searchParams.get('embedEmail')).toBe(userEmail);
-        expect(url.searchParams.get('disableLogout')).toBe('true');
         expect(url.searchParams.get('embedded')).toBe('true');
         expect(url.searchParams.get('embedUrl')).toBe('http://localhost:3000/');
       });
 
-      sdk.renderExperienceSpace(userEmail, {}, getAuthToken);
+      sdk.renderExperienceSpace({
+        iframeOptions: {
+          container,
+        },
+      });
       const iframes = document.querySelectorAll('iframe');
 
       expect(iframes.length).toBe(1);
@@ -272,9 +388,7 @@ describe('CohortSDK', () => {
     });
 
     it('should navigate to a new pathname', async () => {
-      const getAuthToken = vi.fn().mockResolvedValue('test-token');
-
-      sdk.renderExperienceSpace(userEmail, {}, getAuthToken);
+      sdk.renderExperienceSpace();
       const iframe = document.querySelector('iframe');
 
       expect(iframe).not.toBeNull();
@@ -292,163 +406,9 @@ describe('CohortSDK', () => {
     });
   });
 
-  describe('renderExperienceStore', () => {
-    it('should throw an error if the slug is not provided', () => {
-      // @ts-expect-error - This is a test case
-      expect(() => sdk.renderExperienceStore('')).toThrowError('Invalid store slug');
-    });
-
-    it('should throw an error if email is invalid', () => {
-      const getAuthToken = vi.fn();
-
-      expect(() =>
-        sdk.renderExperienceStore(
-          'test-store',
-          {},
-          {
-            userEmail: 'invalid-email',
-            getAuthToken,
-          },
-        ),
-      ).toThrowError('Invalid email');
-    });
-
-    it('should throw an error the authToken method is not provided', () => {
-      expect(() =>
-        sdk.renderExperienceStore(
-          'test-store',
-          {},
-          // @ts-expect-error - This is a test case
-          {
-            userEmail,
-          },
-        ),
-      ).toThrowError('getAuthToken function is required');
-    });
-
-    it('should render a logged out store iframe', async () => {
-      const container = document.createElement('div');
-      const containerId = 'test-container';
-
-      container.id = containerId;
-      document.body.appendChild(container);
-
-      sdk.renderExperienceStore('test-store', {
-        containerId,
-      });
-      const iframe = document.querySelector('iframe');
-
-      expect(iframe).not.toBeNull();
-      expect(iframe?.style.width).toBe('100%');
-      expect(iframe?.style.height).toBe('100%');
-      const wrapper = iframe?.parentElement;
-      const spinner = iframe?.nextElementSibling;
-
-      expect(wrapper?.parentElement?.id).toBe(containerId);
-      expect(wrapper?.style.width).toBe('100%');
-      expect(wrapper?.style.height).toBe('100%');
-      expect(spinner).not.toBeNull();
-      const spinnerSvg = spinner?.querySelector('svg');
-
-      expect(spinnerSvg).not.toBeNull();
-
-      // biome-ignore lint/style/noNonNullAssertion:
-      fireEvent.load(iframe!);
-      await waitFor(() => {
-        const url = new URL(iframe?.src ?? '');
-
-        expect(url.origin).toBe('https://testouze.com');
-        expect(url.pathname).toBe('/store/test-store');
-        expect(url.searchParams.get('embedEmail')).toBeNull();
-        expect(url.searchParams.get('disableLogout')).toBe('true');
-        expect(url.searchParams.get('embedded')).toBe('true');
-        expect(url.searchParams.get('embedUrl')).toBe('http://localhost:3000/');
-      });
-      const postMessageMock = vi.fn();
-
-      // biome-ignore lint/style/noNonNullAssertion:
-      iframe!.contentWindow!.postMessage = postMessageMock;
-      await waitFor(() => {
-        const iframe = document.querySelector('iframe');
-        const spinner = iframe?.nextElementSibling;
-
-        expect(spinner).toBeNull();
-        expect(postMessageMock).not.toHaveBeenCalled();
-      });
-    });
-
-    it('should render a store iframe and call getAuthToken if user is logged out', async () => {
-      const getAuthToken = vi.fn().mockResolvedValue('test-token');
-      const container = document.createElement('div');
-      const containerId = 'test-container';
-
-      container.id = containerId;
-      document.body.appendChild(container);
-
-      sdk.renderExperienceStore(
-        'test-store',
-        {
-          containerId,
-        },
-        {
-          userEmail,
-          getAuthToken,
-        },
-      );
-      const iframe = document.querySelector('iframe');
-
-      expect(iframe).not.toBeNull();
-      const spinner = iframe?.nextElementSibling;
-
-      expect(spinner).not.toBeNull();
-
-      // biome-ignore lint/style/noNonNullAssertion:
-      fireEvent.load(iframe!);
-      await waitFor(() => {
-        const url = new URL(iframe?.src ?? '');
-
-        expect(url.origin).toBe('https://testouze.com');
-        expect(url.pathname).toBe('/store/test-store');
-        expect(url.searchParams.get('embedEmail')).toBe(userEmail);
-        expect(url.searchParams.get('disableLogout')).toBe('true');
-        expect(url.searchParams.get('embedded')).toBe('true');
-        expect(url.searchParams.get('embedUrl')).toBe('http://localhost:3000/');
-      });
-      const logoutMessageEvent = new MessageEvent('message', {
-        data: {event: 'auth.updated', payload: {isLoggedIn: false}},
-      });
-
-      window.dispatchEvent(logoutMessageEvent);
-      await waitFor(() => expect(getAuthToken).toHaveBeenCalled());
-      const postMessageMock = vi.fn();
-
-      // biome-ignore lint/style/noNonNullAssertion:
-      iframe!.contentWindow!.postMessage = postMessageMock;
-      await waitFor(() => {
-        expect(postMessageMock).toHaveBeenCalledWith(
-          {event: 'login.authToken', payload: {authToken: 'test-token'}},
-          'https://testouze.com',
-        );
-      });
-      const loginMessageEvent = new MessageEvent('message', {
-        data: {event: 'auth.updated', payload: {isLoggedIn: true}},
-      });
-
-      window.dispatchEvent(loginMessageEvent);
-      await waitFor(() => {
-        const iframe = document.querySelector('iframe');
-        const spinner = iframe?.nextElementSibling;
-
-        expect(spinner).toBeNull();
-      });
-    });
-  });
-
   describe('destroy', () => {
     it('should clean up iframes and remove listeners on destroy', async () => {
-      const getAuthToken = vi.fn().mockResolvedValue('test-token');
-
-      sdk.renderExperienceSpace(userEmail, {}, getAuthToken);
+      sdk.renderExperienceSpace();
       const iframe = document.querySelector('iframe');
 
       expect(iframe).not.toBeNull();

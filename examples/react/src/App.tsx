@@ -1,74 +1,54 @@
-import CohortSDK from '@cohort-xyz/cohort-embed-js';
-import {useCallback, useEffect, useState} from 'react';
+import {Link, Outlet, useMatch} from 'react-router-dom';
+import {useAppState} from './hooks/appState';
 
-function App() {
-  const [sdk, setSdk] = useState<CohortSDK | null>(null);
-
-  useEffect(() => {
-    const instance = new CohortSDK(import.meta.env.COHORT_XPS_ORIGIN_URL, true);
-
-    const offLocation = instance.on('location.updated', message => {
-      console.log('Location updated', message);
-    });
-
-    const offOrder = instance.on('order.created', message => {
-      console.log('Order created', message);
-    });
-
-    setSdk(instance);
-    return () => {
-      offLocation();
-      offOrder();
-      instance.destroy();
-      setSdk(null);
-    };
-  }, []);
-
-  const renderExperienceSpace = useCallback(
-    (node: HTMLElement | null) => {
-      if (node && sdk) {
-        const AUTH_TOKEN = import.meta.env.COHORT_AUTH_TOKEN;
-
-        sdk.renderExperienceSpace(
-          import.meta.env.COHORT_USER_EMAIL,
-          {
-            container: node,
-            // pathname: '/rewards',
-            // spinnerStyle: {
-            // 	backgroundColor: 'black',
-            // 	color: 'white',
-            // },
-            // iframeStyle: {
-            // 	width: '400px',
-            // },
-            // urlParams: {
-            // 	navigationType: 'burger',
-            // 	navbar: false,
-            // },
-          },
-          async () => {
-            // This is a mock function to simulate the call to get the authentication token
-            return new Promise(resolve => {
-              setTimeout(() => {
-                resolve(AUTH_TOKEN);
-              }, 1000);
-            });
-          },
-        );
-      }
-    },
-    [sdk],
-  );
+const App = () => {
+  const {userEmail, logout} = useAppState(state => ({
+    userEmail: state.userEmail,
+    logout: state.logout,
+  }));
+  const isLogin = useMatch('/login');
+  const isCustomXps = useMatch('/xps-custom');
+  const isCohortXps = useMatch('/xps-cohort');
 
   return (
-    <div
-      style={{
-        width: '100%',
-        height: '100%',
-      }}
-      ref={renderExperienceSpace}
-    />
+    <div id='container'>
+      <nav id='header' className='bg-muted'>
+        <div>
+          <div>
+            <Link className='default' to='/'>
+              React Example App
+            </Link>
+          </div>
+          <div />
+          {isCustomXps && (
+            <div>
+              Experience Space with Custom Login
+              {userEmail ? (
+                <div id='login-state'>
+                  <p className='success'>Logged in as {userEmail}</p>
+                  <button onClick={logout} type='button'>
+                    Logout
+                  </button>
+                </div>
+              ) : (
+                <div id='login-state'>
+                  <p className='attention'>Not logged in</p>
+                  <Link to='/login'>
+                    <button type='button'>Login</button>
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
+          {isCohortXps && <div>Experience Space with Cohort Login</div>}
+          {isLogin && <div>Login</div>}
+        </div>
+      </nav>
+      <div id='content'>
+        <Outlet />
+      </div>
+    </div>
   );
-}
+};
 
 export default App;

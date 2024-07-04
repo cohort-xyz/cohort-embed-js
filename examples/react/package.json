@@ -8,7 +8,9 @@
   "devDependencies": {
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
-    "@vitejs/plugin-react": "^4.2.1"
+    "@vitejs/plugin-react": "^4.2.1",
+    "react-router-dom": "^6.24.0",
+    "zustand": "^4.5.4"
   },
   "name": "react-example",
   "private": true,
