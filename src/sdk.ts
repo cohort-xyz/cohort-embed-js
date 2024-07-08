@@ -1,7 +1,7 @@
-import type {CohortXpsConfig, CustomAuthConfig} from './types';
 import CohortIframe from './iframe';
 import Logger from './logger';
-import {validateMessage, type BaseMessage, type Message, type MessageType} from './messaging';
+import {type BaseMessage, type Message, type MessageType, validateMessage} from './messaging';
+import type {CohortXpsConfig, CustomAuthConfig} from './types';
 import {buildCohortEmbedUrl} from './url';
 import {isEmail} from './utils';
 
@@ -73,6 +73,14 @@ class CohortSDK {
       throw new Error('Invalid email');
     }
 
+    if (config?.auth?.authMode === 'custom' && !config.auth?.getAuthToken) {
+      throw new Error('Missing auth.getAuthToken function parameter');
+    }
+
+    if (config?.auth?.authMode === 'custom' && !config.auth?.customLoginUrl) {
+      throw new Error('Missing auth.customLoginUrl parameter');
+    }
+
     const url = buildCohortEmbedUrl(this.#xpsOrigin, config);
     const iframe = new CohortIframe(url, config?.iframeOptions, this.#verbose);
 
@@ -85,10 +93,16 @@ class CohortSDK {
       let getAuthTokenCalled = false;
       let timeoutId: NodeJS.Timeout;
 
-      // Just hide the spinner if we're not logging a user in
-
       if (userEmail === null) {
-        iframe.hideSpinner();
+        const unsubscribe = this.on('app.loaded', () => {
+          this.#logger.log('App loaded');
+          unsubscribe();
+          // Ensure the redirect to custom login happened before hiding the spinner
+          setTimeout(
+            () => iframe.hideSpinner(),
+            config?.auth?.authMode === 'custom' && config.auth.customLoginUrl ? 300 : 0,
+          );
+        });
         return;
       }
       const authConfig = config?.auth as CustomAuthConfig;
@@ -98,9 +112,6 @@ class CohortSDK {
           this.#logger.log('User is logged in');
           unsubscribe();
           clearTimeout(timeoutId);
-          if (!iframe.loaded) {
-            iframe.load();
-          }
           iframe.hideSpinner();
           return;
         }

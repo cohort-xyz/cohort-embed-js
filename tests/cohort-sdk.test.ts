@@ -43,6 +43,34 @@ describe('CohortSDK', () => {
         ).toThrowError('Invalid email');
       });
 
+      it('should throw an error if getAuthToken function is missing', () => {
+        expect(() =>
+          sdk.renderExperienceSpace({
+            // @ts-expect-error - Missing getAuthToken function
+            auth: {
+              authMode: 'custom',
+              userEmail,
+              customLoginUrl: 'https//testouze.com/login',
+            },
+          }),
+        ).toThrowError('Missing auth.getAuthToken function parameter');
+      });
+
+      it('should throw an error if customLoginUrl is missing', () => {
+        const getAuthToken = vi.fn();
+
+        expect(() =>
+          sdk.renderExperienceSpace({
+            // @ts-expect-error - Missing customLoginUrl parameter
+            auth: {
+              authMode: 'custom',
+              userEmail,
+              getAuthToken,
+            },
+          }),
+        ).toThrowError('Missing auth.customLoginUrl parameter');
+      });
+
       it('should render a space iframe and call getAuthToken if user is logged out', async () => {
         const getAuthToken = vi.fn().mockResolvedValue('test-token');
         const container = document.createElement('div');
@@ -212,18 +240,77 @@ describe('CohortSDK', () => {
           expect(url.searchParams.get('customLoginRedirectParameterName')).toBe('redirectUri');
         });
       });
+
+      it('should render a space iframe and wait for app.loaded event if no email is provided', async () => {
+        const getAuthToken = vi.fn().mockResolvedValue('test-token');
+        const container = document.createElement('div');
+        const containerId = 'test-container';
+
+        container.id = containerId;
+        document.body.appendChild(container);
+
+        sdk.renderExperienceSpace({
+          auth: {
+            authMode: 'custom',
+            userEmail: null,
+            getAuthToken,
+            customLoginUrl: 'https://testouze.com/login',
+          },
+          iframeOptions: {
+            container,
+            iframeStyle: {
+              width: '400px',
+            },
+            spinnerStyle: {
+              backgroundColor: 'red',
+              color: 'blue',
+            },
+          },
+          pathname: '/store/test-store',
+        });
+        const iframe = document.querySelector('iframe');
+        const spinner = iframe?.nextElementSibling;
+
+        expect(spinner).not.toBeNull();
+
+        // biome-ignore lint/style/noNonNullAssertion:
+        fireEvent.load(iframe!);
+        await waitFor(() => {
+          const url = new URL(iframe?.src ?? '');
+
+          expect(url.origin).toBe('https://testouze.com');
+          expect(url.pathname).toBe('/store/test-store');
+          expect(url.searchParams.get('embedEmail')).toBe(null);
+          expect(url.searchParams.get('disableLogout')).toBe('true');
+          expect(url.searchParams.get('embedded')).toBe('true');
+          expect(url.searchParams.get('embedUrl')).toBe('http://localhost:3000/');
+        });
+        const appLoadedMessageEvent = new MessageEvent('message', {
+          data: {event: 'app.loaded', payload: {}},
+        });
+
+        window.dispatchEvent(appLoadedMessageEvent);
+        await waitFor(() => {
+          const iframe = document.querySelector('iframe');
+          const spinner = iframe?.nextElementSibling;
+
+          expect(spinner).toBeNull();
+        });
+      });
     });
 
     describe('with cohort login', () => {
-      it('should not set custom login parameters', async () => {
+      it('should not set custom login parameters and wait for app.loaded event', async () => {
         sdk.renderExperienceSpace({
           auth: {
             authMode: 'cohort',
           },
         });
         const iframe = document.querySelector('iframe');
+        const spinner = iframe?.nextElementSibling;
 
         expect(iframe).not.toBeNull();
+        expect(spinner).not.toBeNull();
         // biome-ignore lint/style/noNonNullAssertion:
         fireEvent.load(iframe!);
         await waitFor(() => {
@@ -237,23 +324,17 @@ describe('CohortSDK', () => {
           expect(url.searchParams.get('embedded')).toBe('true');
           expect(url.searchParams.get('embedUrl')).toBe('http://localhost:3000/');
         });
-      });
 
-      it('should not disable logout', async () => {
-        sdk.renderExperienceSpace({
-          auth: {
-            authMode: 'cohort',
-          },
+        const appLoadedMessageEvent = new MessageEvent('message', {
+          data: {event: 'app.loaded', payload: {}},
         });
-        const iframe = document.querySelector('iframe');
 
-        expect(iframe).not.toBeNull();
-        // biome-ignore lint/style/noNonNullAssertion:
-        fireEvent.load(iframe!);
+        window.dispatchEvent(appLoadedMessageEvent);
         await waitFor(() => {
-          const url = new URL(iframe?.src ?? '');
+          const iframe = document.querySelector('iframe');
+          const spinner = iframe?.nextElementSibling;
 
-          expect(url.searchParams.get('disableLogout')).toBe('false');
+          expect(spinner).toBeNull();
         });
       });
     });
