@@ -3,7 +3,8 @@ export type MessageType =
   | 'order.error'
   | 'payment.failed'
   | 'location.updated'
-  | 'auth.updated';
+  | 'auth.updated'
+  | 'app.loaded';
 
 export interface BaseMessage<T extends MessageType, P extends Record<string, unknown>> {
   event: T;
@@ -15,13 +16,15 @@ interface OrderErrorMessage extends BaseMessage<'order.error', {error: string}> 
 interface PaymentFailedMessage extends BaseMessage<'payment.failed', {paymentSessionId: string}> {}
 interface LocationUpdatedMessage extends BaseMessage<'location.updated', {location: string}> {}
 interface AuthUpdatedMessage extends BaseMessage<'auth.updated', {isLoggedIn: boolean}> {}
+interface AppLoadedMessage extends BaseMessage<'app.loaded', never> {}
 
 export type Message =
   | OrderCreatedMessage
   | OrderErrorMessage
   | PaymentFailedMessage
   | LocationUpdatedMessage
-  | AuthUpdatedMessage;
+  | AuthUpdatedMessage
+  | AppLoadedMessage;
 
 function isBaseMessage<T extends MessageType, P extends Record<string, unknown>>(
   message: unknown,
@@ -43,6 +46,7 @@ function validateMessageType(event: string): event is MessageType {
     'payment.failed',
     'location.updated',
     'auth.updated',
+    'app.loaded',
   ].includes(event);
 }
 
@@ -64,6 +68,8 @@ export const validateMessage = (message: unknown): message is Message => {
       return typeof message.payload.location === 'string';
     case 'auth.updated':
       return typeof message.payload.isLoggedIn === 'boolean';
+    case 'app.loaded':
+      return Object.keys(message.payload).length === 0;
     default:
       return false;
   }

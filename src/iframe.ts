@@ -1,29 +1,5 @@
 import Logger from './logger';
-import {buildCohortEmbedUrl, type EmbedUrlInputParams} from './url';
-
-/**
- * Options for customizing the spinner.
- */
-type SpinnerOptions = {
-  backgroundColor?: string;
-  color?: string;
-};
-
-/**
- * Options for configuring the iframe.
- */
-export type IframeOptions = {
-  containerId?: string;
-  container?: HTMLElement;
-  iframeStyle?: {
-    width?: string;
-    height?: string;
-    border?: string;
-  };
-  spinnerStyle?: SpinnerOptions;
-  pathname?: string;
-  urlParams?: EmbedUrlInputParams;
-};
+import type {IframeOptions, SpinnerOptions} from './types';
 
 /**
  * Represents a Cohort Iframe.
@@ -38,12 +14,12 @@ class CohortIframe {
 
   /**
    * Creates an instance of CohortIframe.
-   * @param {string} xpsOrigin - The origin URL for the XPS.
+   * @param {URL} url - The URL to load in the iframe.
    * @param {IframeOptions} [options] - The options for the iframe.
    * @param {boolean} [verbose] - Whether to enable verbose logging.
    * @throws Will throw an error if the container with the specified ID is not found.
    */
-  constructor(xpsOrigin: string, options?: IframeOptions, verbose?: boolean) {
+  constructor(url: URL, options?: IframeOptions, verbose?: boolean) {
     const containerId = options?.containerId;
     const {iframeStyle} = options ?? {};
 
@@ -52,7 +28,7 @@ class CohortIframe {
     }
 
     this.#logger = new Logger(verbose ?? false);
-    this.#url = buildCohortEmbedUrl(xpsOrigin, options?.urlParams, options?.pathname);
+    this.#url = url;
     this.#wrapper = document.createElement('div');
     Object.assign(this.#wrapper.style, {
       position: 'relative',
