@@ -63,16 +63,15 @@ const cohort = new CohortSDK('https://your-xps-origin.com');
 To render the Experience Space iframe, you need to call the `renderExperienceSpace` method:
 
 ```javascript
-const userEmail = 'user@example.com';
-const options = {
-  containerId: 'container',
-};
-const getAuthToken = async () => {
-  // Your logic to get the authentication token from your backend
-  return 'your-auth-token';
-};
-
-cohort.renderExperienceSpace(userEmail, options, getAuthToken);
+sdk.renderExperienceSpace({
+  // See after for the available options and explanations
+  auth: {
+    authMode: 'cohort',
+  },
+  iframeOptions: {
+    containerId: 'container',
+  },
+});
 ```
 
 ### Handling Messages
