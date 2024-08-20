@@ -288,14 +288,25 @@ describe('CohortSDK', () => {
         const appLoadedMessageEvent = new MessageEvent('message', {
           data: {event: 'app.loaded', payload: {}},
         });
+        const authRedirectMessageEvent = new MessageEvent('message', {
+          data: {event: 'auth.redirect', payload: {url: 'https://testouze.com/login'}},
+        });
+        const assignMock = vi.fn();
+        const {location} = window;
 
+        // Mock window.location.assign to track the redirect
+        window.location = {assign: assignMock} as unknown as Location;
         window.dispatchEvent(appLoadedMessageEvent);
+        window.dispatchEvent(authRedirectMessageEvent);
         await waitFor(() => {
           const iframe = document.querySelector('iframe');
           const spinner = iframe?.nextElementSibling;
 
           expect(spinner).toBeNull();
+          expect(assignMock).toHaveBeenCalledWith('https://testouze.com/login');
         });
+        // Restore window.location
+        window.location = location;
       });
     });
 

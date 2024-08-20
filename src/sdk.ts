@@ -94,23 +94,33 @@ class CohortSDK {
       let timeoutId: NodeJS.Timeout;
 
       if (userEmail === null) {
-        const unsubscribe = this.on('app.loaded', () => {
+        const offAppLoaded = this.on('app.loaded', () => {
           this.#logger.log('App loaded');
-          unsubscribe();
-          // Ensure the redirect to custom login happened before hiding the spinner
-          setTimeout(
-            () => iframe.hideSpinner(),
-            config?.auth?.authMode === 'custom' && config.auth.customLoginUrl ? 300 : 0,
-          );
+          offAppLoaded();
+
+          if (config?.auth?.authMode === 'custom') {
+            // Because of Cross Origin restrictions, the redirection must be done by the parent window
+            // and not the iframe itself. This is why we emit an event to the parent window.
+            const offAuthRedirect = this.on('auth.redirect', payload => {
+              this.#logger.log('Redirecting to custom login URL', {
+                url: payload.url,
+              });
+              iframe.hideSpinner();
+              window.location.assign(payload.url);
+              offAuthRedirect();
+            });
+          } else {
+            iframe.hideSpinner();
+          }
         });
         return;
       }
       const authConfig = config?.auth as CustomAuthConfig;
 
-      const unsubscribe = this.on('auth.updated', async payload => {
+      const offAuthUpdated = this.on('auth.updated', async payload => {
         if (payload.isLoggedIn) {
           this.#logger.log('User is logged in');
-          unsubscribe();
+          offAuthUpdated();
           clearTimeout(timeoutId);
           iframe.hideSpinner();
           return;
