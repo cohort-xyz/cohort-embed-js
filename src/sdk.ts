@@ -98,6 +98,7 @@ class CohortSDK {
           this.#logger.log('App loaded');
           offAppLoaded();
 
+          iframe.hideSpinner();
           if (config?.auth?.authMode === 'custom') {
             // Because of Cross Origin restrictions, the redirection must be done by the parent window
             // and not the iframe itself. This is why we emit an event to the parent window.
@@ -105,12 +106,9 @@ class CohortSDK {
               this.#logger.log('Redirecting to custom login URL', {
                 url: payload.url,
               });
-              iframe.hideSpinner();
               window.location.assign(payload.url);
               offAuthRedirect();
             });
-          } else {
-            iframe.hideSpinner();
           }
         });
         return;
