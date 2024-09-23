@@ -1,0 +1,40 @@
+name: Cohort Embed JS
+
+on:
+  push:
+
+env:
+  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+  GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+jobs:
+  cohort:
+    runs-on: ubicloud-standard-4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.11.1'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8.14.0
+
+      - name: Install dependencies with pnpm
+        run: pnpm install
+
+      - name: Run Biome linting
+        run: pnpm run lint
+
+      - name: Run Vitest tests
+        run: pnpm test
+
+      - name: Building SDK
+        run: pnpm run build
+
+      - name: Creating and publishing release
+        run: pnpm run semantic-release
