@@ -1,32 +1,34 @@
 // The goal is also to expose this function in the documentation for merchants integration
 
-import type {CohortXpsConfig} from './types';
+import type {CohortXpsConfig, SupportedLanguage} from './types';
 
-const allowedEmbedUrlParams = [
+const allowedEmbedUrlParams: (keyof EmbedUrlParams)[] = [
   'customLoginUrl',
   'customLoginRedirectParameterName',
   'disableLogout',
   'embedded',
   'embedEmail',
   'embedUrl',
+  'lng',
   'navbar',
   'navigationType',
 ];
 
 type EmbedUrlParams = {
-  disableLogout: boolean;
-  embedded: boolean;
-  embedUrl: string;
-  embedEmail?: string;
-  navbar?: boolean;
-  navigationType?: 'burger' | 'tabbar';
   customLoginUrl?: string;
   customLoginRedirectParameterName?: string;
+  disableLogout: boolean;
+  embedded: boolean;
+  embedEmail?: string;
+  embedUrl: string;
+  lng?: SupportedLanguage;
+  navbar?: boolean;
+  navigationType?: 'burger' | 'tabbar';
 };
 
 const validateEmbedUrlParams = (params: EmbedUrlParams): EmbedUrlParams => {
   for (const key of Object.keys(params)) {
-    if (!allowedEmbedUrlParams.includes(key)) {
+    if (!allowedEmbedUrlParams.includes(key as keyof EmbedUrlParams)) {
       delete params[key as keyof EmbedUrlParams];
     }
   }
@@ -60,6 +62,7 @@ export function buildCohortEmbedUrl(xpsUrl: string, config?: CohortXpsConfig): U
     navigationType: config?.navigationType,
     customLoginUrl,
     customLoginRedirectParameterName,
+    lng: config?.language,
   });
 
   if (cohortRedirect) {

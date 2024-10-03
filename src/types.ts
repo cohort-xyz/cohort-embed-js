@@ -46,6 +46,31 @@ export type CohortAuthConfig = {
 };
 
 /**
+ * Supported languages for the Experience Space.
+ */
+export type SupportedLanguage =
+  | 'ar'
+  | 'zh'
+  | 'cs'
+  | 'nl'
+  | 'en'
+  | 'fr'
+  | 'de'
+  | 'el'
+  | 'id'
+  | 'it'
+  | 'ja'
+  | 'ko'
+  | 'fa'
+  | 'pl'
+  | 'pt'
+  | 'ru'
+  | 'es'
+  | 'tr'
+  | 'uk'
+  | 'vi';
+
+/**
  * Options for rendering the Cohort Experience Space.
  * @param auth - The configuration of the user authentication. There are 2 possible types of configurations:
  * - CustomAuthConfig: The user is authenticated by the parent application and the user credentials are passed to the SDK.
@@ -55,6 +80,7 @@ export type CohortAuthConfig = {
  * @param pathname - The path to load inside the iframe. Defaults to the home page.
  * @param showNavbar - Whether to show the navbar inside the iframe. Defaults to true.
  * @param navigationType - The type of navigation menu to use inside the iframe. Defaults to 'tabbar'.
+ * @param language - The language to use for the Experience Space. Defaults to 'en'.
  */
 export type CohortXpsConfig = {
   auth?: CustomAuthConfig | CohortAuthConfig;
@@ -62,4 +88,5 @@ export type CohortXpsConfig = {
   pathname?: string;
   showNavbar?: boolean;
   navigationType?: 'burger' | 'tabbar';
+  language?: SupportedLanguage;
 };
