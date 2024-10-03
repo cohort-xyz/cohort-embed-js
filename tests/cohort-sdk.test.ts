@@ -99,6 +99,7 @@ describe('CohortSDK', () => {
           pathname: '/space/rewards',
           showNavbar: false,
           navigationType: 'burger',
+          language: 'fr',
         });
         const iframe = document.querySelector('iframe');
 
@@ -130,6 +131,7 @@ describe('CohortSDK', () => {
           expect(url.searchParams.get('navbar')).toBe('false');
           expect(url.searchParams.get('navigationType')).toBe('burger');
           expect(url.searchParams.get('notAuthorizedParam')).toBeNull();
+          expect(url.searchParams.get('lng')).toBe('fr');
         });
         const logoutMessageEvent = new MessageEvent('message', {
           data: {event: 'auth.updated', payload: {isLoggedIn: false}},
@@ -284,6 +286,7 @@ describe('CohortSDK', () => {
           expect(url.searchParams.get('disableLogout')).toBe('true');
           expect(url.searchParams.get('embedded')).toBe('true');
           expect(url.searchParams.get('embedUrl')).toBe('http://localhost:3000/');
+          expect(url.searchParams.get('lng')).toBeNull();
         });
         const appLoadedMessageEvent = new MessageEvent('message', {
           data: {event: 'app.loaded', payload: {}},
