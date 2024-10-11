@@ -1,6 +1,4 @@
-// The goal is also to expose this function in the documentation for merchants integration
-
-import type {CohortXpsConfig, SupportedLanguage} from './types';
+import type {CohortXpsConfig, NavigationType, SupportedLanguage} from './types';
 
 const allowedEmbedUrlParams: (keyof EmbedUrlParams)[] = [
   'customLoginUrl',
@@ -23,7 +21,7 @@ type EmbedUrlParams = {
   embedUrl: string;
   lng?: SupportedLanguage;
   navbar?: boolean;
-  navigationType?: 'burger' | 'tabbar';
+  navigationType?: NavigationType;
 };
 
 const validateEmbedUrlParams = (params: EmbedUrlParams): EmbedUrlParams => {
@@ -37,6 +35,7 @@ const validateEmbedUrlParams = (params: EmbedUrlParams): EmbedUrlParams => {
 
 export function formatPathname(pathname: string): string {
   const path = pathname.startsWith('/') ? pathname : `/${pathname}`;
+
   return path;
 }
 
