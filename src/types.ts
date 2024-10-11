@@ -71,6 +71,11 @@ export type SupportedLanguage =
   | 'vi';
 
 /**
+ * The type of navigation menu to use inside the iframe.
+ */
+export type NavigationType = 'burger' | 'tabbar' | 'none';
+
+/**
  * Options for rendering the Cohort Experience Space.
  * @param auth - The configuration of the user authentication. There are 2 possible types of configurations:
  * - CustomAuthConfig: The user is authenticated by the parent application and the user credentials are passed to the SDK.
@@ -87,6 +92,6 @@ export type CohortXpsConfig = {
   iframeOptions?: IframeOptions;
   pathname?: string;
   showNavbar?: boolean;
-  navigationType?: 'burger' | 'tabbar';
+  navigationType?: NavigationType;
   language?: SupportedLanguage;
 };
