@@ -61,6 +61,7 @@ function ExperienceSpaceWithCustomLogin() {
           iframeOptions: {
             container: node,
           },
+          pathname: '/challenges/qr-code/steps/246bda95-1501-4f06-a16f-b4cf0de5fa2a/verify',
         });
       }
     },
